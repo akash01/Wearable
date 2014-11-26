@@ -48,6 +48,11 @@ function createHTML(log_string)
 	var log = document.getElementById('resultBoard');
 	log.innerHTML = log.innerHTML + "<br> : " + log_string;
 }
+function createHTML2(log_string)
+{
+	document.getElementById("resultBoard").innerHTML =  log_string;
+	
+}
 
 function onerror(err) {
 	console.log("err [" + err + "]");
@@ -130,7 +135,7 @@ function onreceive(channelId, data) {
 function fetch() {
 	try {
 		SASocket.setDataReceiveListener(onreceive);
-		SASocket.sendData(CHANNELID, "Hello " +"X:" + zx + " Y:" + leftCenterRight + " Z:" + upDown);
+		SASocket.sendData(CHANNELID, "Hello " +"X:" + zx + " Y: " + leftCenterRight + " Z: " + upDown + " Rot X : " + rotx + " Rot Y : " + roty + " Rot Z : " + rotz);
 	} catch(err) {
 		console.log("exception [" + err.name + "] msg[" + err.message + "]");
 	}
@@ -303,7 +308,8 @@ window.onload = function () {
 			
 			
 		}
-				
+		fetch();
+		
 	}); 
 
 	window.addEventListener("deviceorientation", function(e){
