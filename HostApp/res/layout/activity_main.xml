@@ -22,4 +22,12 @@
             android:layout_marginLeft="36dp"
             android:textAppearance="?android:attr/textAppearanceLarge" />
 
+        <SeekBar
+            android:id="@+id/frequency"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@id/note"
+            android:layout_marginTop="45dp" />
+
 </RelativeLayout>
