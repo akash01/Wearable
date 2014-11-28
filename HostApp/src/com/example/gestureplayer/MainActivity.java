@@ -1,20 +1,28 @@
 package com.example.gestureplayer;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements SensorEventListener{
 	// audio processing thread
 	Thread td;
 	// sampling rate
@@ -26,38 +34,40 @@ public class MainActivity extends Activity {
 	SeekBar fSlider;
 	double sliderval;
 	
-	private PlayNote playNote;
-	static TextView note;
-	private Handler mHandler = new Handler();
-	
-	private Runnable mUpdateTimer = new Runnable() { 
-		@Override
-		public void run() {
-			playNote.NoteFile();
-			Log.d(getLocalClassName(), "void run");
-			mHandler.postDelayed(mUpdateTimer, 200L);
-		}
-	};
-	
+	//acceloremeter sensor
+	private SensorManager sensorManager;
+	private boolean color = false;
+	private View aView;
+	private long lastUpdate;
+	float accelationSquareRoot;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+	    getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+	        WindowManager.LayoutParams.FLAG_FULLSCREEN);
+	    
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		note = (TextView) findViewById(R.id.note);
 		fSlider = (SeekBar) findViewById(R.id.frequency);
+		aView = (TextView) findViewById(R.id.acclerometer);
 		
+		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+	    lastUpdate = System.currentTimeMillis();
+	    
 		// create a listener for the sliderbar
 		OnSeekBarChangeListener listener = new OnSeekBarChangeListener() {
 			public void onStopTrackingTouch(SeekBar seekBar) {}
 			public void onStartTrackingTouch(SeekBar seekBar) {}
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 				if(fromUser) sliderval = progress/(double)seekBar.getMax();
+				System.out.println(sliderval);
 			}
 		};
 		
 		//set the listener on the slider
 		fSlider.setOnSeekBarChangeListener(listener);
-		
+		System.out.println(this.accelationSquareRoot);
 		// start a new thread to make audio
 		td = new Thread() {
 			public void run() {
@@ -113,6 +123,11 @@ public class MainActivity extends Activity {
 	
 	protected void onResume() {
 		super.onResume();
+		// register this class as a listener for the orientation and
+	    // accelerometer sensors
+	    sensorManager.registerListener(this,
+	        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+	        SensorManager.SENSOR_DELAY_NORMAL);
 	}
 	
 	protected void onDestroy() {
@@ -131,7 +146,12 @@ public class MainActivity extends Activity {
 		td = null;
 	}
 	
-
+	@Override
+	protected void onPause() {
+		// unregister listener
+		super.onPause();
+		sensorManager.unregisterListener(this);
+	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -144,5 +164,44 @@ public class MainActivity extends Activity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
+
+	@Override
+	public void onAccuracyChanged(Sensor arg0, int arg1) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+			getAccelerometer(event);
+		}
+	}
+	private void getAccelerometer(SensorEvent event) {
+	    float[] values = event.values;
+	    // Movement
+	    float x = values[0];
+	    float y = values[1];
+	    float z = values[2];
+
+	    this.accelationSquareRoot = (x * x + y * y + z * z)
+	    			/ (SensorManager.GRAVITY_EARTH * SensorManager.GRAVITY_EARTH);
+	    
+	    
+	    long actualTime = event.timestamp;
+	    if (this.accelationSquareRoot >= 2) {
+	    	if (actualTime - lastUpdate < 200) {
+	    		return;
+	    	}
+	    	lastUpdate = actualTime;
+	    	Toast.makeText(this, "Device was shuffed", Toast.LENGTH_SHORT).show();
+	    	if (color) {
+	    		aView.setBackgroundColor(Color.GREEN);
+	    	} else {
+	    		aView.setBackgroundColor(Color.RED);
+	    	}
+	    color = !color;
+    }
+  }
 	
 }
