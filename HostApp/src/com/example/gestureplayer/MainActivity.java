@@ -15,8 +15,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
@@ -29,10 +27,16 @@ public class MainActivity extends Activity implements SensorEventListener{
 	int spr = 44100;
 	// audio on and off
 	boolean isRunning = true;
+	int amp = 1000;
+	int buffersize;
+	double fr = 140.f;
+	double ph = 0.0;
+	double twopi = 8.*Math.atan(1.);
 	
 	// ui seekbar or slider
 	SeekBar fSlider;
 	double sliderval;
+	private AudioTrack audioTrack;
 	
 	//acceloremeter sensor
 	private SensorManager sensorManager;
@@ -43,10 +47,6 @@ public class MainActivity extends Activity implements SensorEventListener{
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-	    getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-	        WindowManager.LayoutParams.FLAG_FULLSCREEN);
-	    
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		fSlider = (SeekBar) findViewById(R.id.frequency);
@@ -67,8 +67,23 @@ public class MainActivity extends Activity implements SensorEventListener{
 		
 		//set the listener on the slider
 		fSlider.setOnSeekBarChangeListener(listener);
-		System.out.println(this.accelationSquareRoot);
-		// start a new thread to make audio
+		// buffer size, holds the size of audio block to be output
+		buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
+		// create audiotrack object
+		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
+									,buffersize,AudioTrack.MODE_STREAM);
+		
+		// signal buffer
+		//samples[] = new short[buffersize];
+		//int amp = 10000;
+		
+		//double fr = 440.f;
+		
+		
+		// start audio 
+		audioTrack.play();
+	
+/*		// start a new thread to make audio
 		td = new Thread() {
 			public void run() {
 				// process priority
@@ -101,7 +116,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 			}
 		};
 		td.start();
-		
+		*/
 		
 	}
 
@@ -184,12 +199,12 @@ public class MainActivity extends Activity implements SensorEventListener{
 	    float y = values[1];
 	    float z = values[2];
 
-	    this.accelationSquareRoot = (x * x + y * y + z * z)
+	    accelationSquareRoot = (x * x + y * y + z * z)
 	    			/ (SensorManager.GRAVITY_EARTH * SensorManager.GRAVITY_EARTH);
 	    
 	    
 	    long actualTime = event.timestamp;
-	    if (this.accelationSquareRoot >= 2) {
+	    if (accelationSquareRoot >= 2) {
 	    	if (actualTime - lastUpdate < 200) {
 	    		return;
 	    	}
@@ -200,8 +215,47 @@ public class MainActivity extends Activity implements SensorEventListener{
 	    	} else {
 	    		aView.setBackgroundColor(Color.RED);
 	    	}
-	    color = !color;
-    }
-  }
+	    	color = !color;
+	    }
+	    //System.out.println(accelationSquareRoot);
+		// start a new thread to make audio
+		td = new Thread() {
+			public void run() {
+				// process priority
+				setPriority(Thread.MAX_PRIORITY);
+/*				// buffer size, holds the size of audio block to be output
+				int buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
+				// create audiotrack object
+				AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
+											,buffersize,AudioTrack.MODE_STREAM);
+				// signal buffer
+				short samples[] = new short[buffersize];
+				//int amp = 10000;
+				int amp = 1000;
+				double twopi = 8.*Math.atan(1.);
+				//double fr = 440.f;
+				double fr = 140.f;
+				double ph = 0.0;
+				
+				// start audio 
+				audioTrack.play();*/
+				short samples[] = new short[buffersize];
+				// audio loop
+				while(isRunning) {
+					fr =  440 + 440*accelationSquareRoot;
+					for(int i=0; i<buffersize;i++) {
+						samples[i] = (short) (amp*Math.sin(ph));
+						ph += twopi*fr/spr;
+					}
+					audioTrack.write(samples,0,buffersize);
+				}
+				System.out.println(accelationSquareRoot);
+				
+				audioTrack.stop();
+				audioTrack.release();
+			}
+		};
+		td.start();
+	}
 	
 }
