@@ -73,51 +73,8 @@ public class MainActivity extends Activity implements SensorEventListener{
 		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
 									,buffersize,AudioTrack.MODE_STREAM);
 		
-		// signal buffer
-		//samples[] = new short[buffersize];
-		//int amp = 10000;
-		
-		//double fr = 440.f;
-		
-		
 		// start audio 
-		audioTrack.play();
-	
-/*		// start a new thread to make audio
-		td = new Thread() {
-			public void run() {
-				// process priority
-				setPriority(Thread.MAX_PRIORITY);
-				// buffer size, holds the size of audio block to be output
-				int buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
-				// create audiotrack object
-				AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
-											,buffersize,AudioTrack.MODE_STREAM);
-				// signal buffer
-				short samples[] = new short[buffersize];
-				int amp = 10000;
-				double twopi = 8.*Math.atan(1.);
-				double fr = 440.f;
-				double ph = 0.0;
-				
-				// start audio 
-				audioTrack.play();
-				// audio loop
-				while(isRunning) {
-					fr =  440 + 440*sliderval;
-					for(int i=0; i<buffersize;i++) {
-						samples[i] = (short) (amp*Math.sin(ph));
-						ph += twopi*fr/spr;
-					}
-					audioTrack.write(samples,0,buffersize);
-				}
-				audioTrack.stop();
-				audioTrack.release();
-			}
-		};
-		td.start();
-		*/
-		
+		audioTrack.play();	
 	}
 
 	@Override
@@ -223,22 +180,6 @@ public class MainActivity extends Activity implements SensorEventListener{
 			public void run() {
 				// process priority
 				setPriority(Thread.MAX_PRIORITY);
-/*				// buffer size, holds the size of audio block to be output
-				int buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
-				// create audiotrack object
-				AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
-											,buffersize,AudioTrack.MODE_STREAM);
-				// signal buffer
-				short samples[] = new short[buffersize];
-				//int amp = 10000;
-				int amp = 1000;
-				double twopi = 8.*Math.atan(1.);
-				//double fr = 440.f;
-				double fr = 140.f;
-				double ph = 0.0;
-				
-				// start audio 
-				audioTrack.play();*/
 				short samples[] = new short[buffersize];
 				// audio loop
 				while(isRunning) {
