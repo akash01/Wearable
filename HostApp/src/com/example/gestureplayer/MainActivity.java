@@ -19,6 +19,8 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.samsung.android.sdk.accessory.SA;
+
 
 public class MainActivity extends Activity implements SensorEventListener{
 	// audio processing thread
@@ -54,6 +56,8 @@ public class MainActivity extends Activity implements SensorEventListener{
 		
 		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 	    lastUpdate = System.currentTimeMillis();
+	    
+
 	    
 		// create a listener for the sliderbar
 		OnSeekBarChangeListener listener = new OnSeekBarChangeListener() {
