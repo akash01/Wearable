@@ -42,6 +42,8 @@ public class HelloAccessoryProviderService extends SAAgent {
 	private final IBinder mBinder = new LocalBinder();
 	private int authCount = 1;
 
+	private int acclvalue;
+
 	public class LocalBinder extends Binder {
 		public HelloAccessoryProviderService getService() {
 			return HelloAccessoryProviderService.this;
@@ -74,7 +76,10 @@ public class HelloAccessoryProviderService extends SAAgent {
 					+ String.valueOf(time.second);
 
 			String strToUpdateUI = new String(data);
-
+			acclvalue = (int) 0.1;
+			MainActivity activity = new MainActivity();
+			activity.PlayNote(acclvalue);
+			
 			final String message = strToUpdateUI.concat(timeStr);
 
 			final HelloAccessoryProviderConnection uHandler = mConnectionsMap.get(Integer
@@ -100,6 +105,14 @@ public class HelloAccessoryProviderService extends SAAgent {
 				mConnectionsMap.remove(mConnectionId);
 			}
 		}
+	}
+	
+	public Integer getAcclValue(){
+	  return acclvalue;
+	}
+	
+	public void setName(int acclvalue){
+	   this.acclvalue = acclvalue;
 	}
 
     @Override

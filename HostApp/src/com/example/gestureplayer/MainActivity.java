@@ -22,7 +22,7 @@ import android.widget.Toast;
 import com.samsung.android.sdk.accessory.SA;
 
 
-public class MainActivity extends Activity implements SensorEventListener{
+public class MainActivity extends Activity{
 	// audio processing thread
 	Thread td;
 	// sampling rate
@@ -54,10 +54,8 @@ public class MainActivity extends Activity implements SensorEventListener{
 		fSlider = (SeekBar) findViewById(R.id.frequency);
 		aView = (TextView) findViewById(R.id.acclerometer);
 		
-		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-	    lastUpdate = System.currentTimeMillis();
-	    
-
+		//sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+	    //lastUpdate = System.currentTimeMillis();
 	    
 		// create a listener for the sliderbar
 		OnSeekBarChangeListener listener = new OnSeekBarChangeListener() {
@@ -68,17 +66,44 @@ public class MainActivity extends Activity implements SensorEventListener{
 				System.out.println(sliderval);
 			}
 		};
-		
 		//set the listener on the slider
 		fSlider.setOnSeekBarChangeListener(listener);
+	}
+	
+	public void PlayNote(final int value) {
+		
 		// buffer size, holds the size of audio block to be output
 		buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
 		// create audiotrack object
 		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
 									,buffersize,AudioTrack.MODE_STREAM);
-		
 		// start audio 
-		audioTrack.play();	
+		audioTrack.play();
+				
+	    System.out.println(value);
+		// start a new thread to make audio
+		td = new Thread() {
+			public void run() {
+				// process priority
+				setPriority(Thread.MAX_PRIORITY);
+				short samples[] = new short[buffersize];
+				// audio loop
+				while(isRunning) {
+					fr =  440 + 440*value;
+					for(int i=0; i<buffersize;i++) {
+						samples[i] = (short) (amp*Math.sin(ph));
+						ph += twopi*fr/spr;
+					}
+					audioTrack.write(samples,0,buffersize);
+				}
+				System.out.println(accelationSquareRoot);
+				
+				audioTrack.stop();
+				audioTrack.release();
+			}
+		};
+		td.start();
+		
 	}
 
 	@Override
@@ -101,9 +126,9 @@ public class MainActivity extends Activity implements SensorEventListener{
 		super.onResume();
 		// register this class as a listener for the orientation and
 	    // accelerometer sensors
-	    sensorManager.registerListener(this,
+	/*    sensorManager.registerListener(this,
 	        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-	        SensorManager.SENSOR_DELAY_NORMAL);
+	        SensorManager.SENSOR_DELAY_NORMAL);*/
 	}
 	
 	protected void onDestroy() {
@@ -126,7 +151,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 	protected void onPause() {
 		// unregister listener
 		super.onPause();
-		sensorManager.unregisterListener(this);
+		//sensorManager.unregisterListener(this);
 	}
 
 	@Override
@@ -141,7 +166,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 		return super.onOptionsItemSelected(item);
 	}
 
-	@Override
+	/*@Override
 	public void onAccuracyChanged(Sensor arg0, int arg1) {
 		// TODO Auto-generated method stub
 		
@@ -201,6 +226,6 @@ public class MainActivity extends Activity implements SensorEventListener{
 			}
 		};
 		td.start();
-	}
+	}*/
 	
 }
