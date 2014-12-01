@@ -20,6 +20,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.text.format.Time;
 import android.util.Log;
@@ -32,9 +33,25 @@ import com.samsung.android.sdk.accessory.SAAuthenticationToken;
 import com.samsung.android.sdk.accessory.SAPeerAgent;
 import com.samsung.android.sdk.accessory.SASocket;
 
+
+
+
 public class HelloAccessoryProviderService extends SAAgent {
 	public static final String TAG = "HelloAccessoryProviderService";
 	
+	Handler handler = new Handler();
+	
+	public int Updown = 6;
+	public int leftright = 1;
+	private final int duration = 3; // seconds
+	private final int sampleRate = 8000;
+	private final int numSamples = duration * sampleRate;
+	private final double sample[] = new double[numSamples];
+	private final double freqOfTone = 440; // hz
+
+	 private final byte generatedSnd[] = new byte[2 * numSamples];
+
+	    
 	// audio processing thread
 	Thread td;
 	// sampling rate
@@ -63,7 +80,41 @@ public class HelloAccessoryProviderService extends SAAgent {
 	private int authCount = 1;
 
 	private int acclvalue;
+	
+	 void genTone(){
+	        // fill out the array
+	        for (int i = 0; i < numSamples; ++i) {
+	            sample[i] = Math.sin(2 * Math.PI * i / (sampleRate/midOctave[Updown]));
+	        }
 
+	        // convert to 16 bit pcm sound array
+	        // assumes the sample buffer is normalised.
+	        int idx = 0;
+	        for (final double dVal : sample) {
+	            // scale to maximum amplitude
+	            final short val = (short) ((dVal * 32767));
+	            // in 16 bit wav PCM, first byte is the low order byte
+	            generatedSnd[idx++] = (byte) (val & 0x00ff);
+	            generatedSnd[idx++] = (byte) ((val & 0xff00) >>> 8);
+
+	        }
+	    }
+	 
+	    void playSound(){
+	        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+	                sampleRate, AudioFormat.CHANNEL_OUT_MONO,
+	                AudioFormat.ENCODING_PCM_16BIT, generatedSnd.length,
+	                AudioTrack.MODE_STATIC);
+	        audioTrack.write(generatedSnd, 0, generatedSnd.length);
+	        try {
+	        	audioTrack.play();
+	        }  catch (java.lang.IllegalStateException e) {
+			    // TODO Auto-generated catch block
+			    e.printStackTrace();
+	        }
+	        
+	    }
+	    
 	public class LocalBinder extends Binder {
 		public HelloAccessoryProviderService getService() {
 			return HelloAccessoryProviderService.this;
@@ -100,8 +151,8 @@ public class HelloAccessoryProviderService extends SAAgent {
 			String[] parts = strToUpdateUI.split(",");
 			
 		
-			final int Updown = Integer.parseInt(parts[1]);
-			int lefright = Integer.parseInt(parts[0]);
+			Updown = Integer.parseInt(parts[1]);
+			leftright = Integer.parseInt(parts[0]);
 		
 			Toast.makeText(getBaseContext(),
 	                new String(strToUpdateUI), Toast.LENGTH_LONG)
@@ -110,39 +161,6 @@ public class HelloAccessoryProviderService extends SAAgent {
 			
 			//[Hello X, -0.14330385384933642 Y,  1 Z,  11 Rot X ,  -6.424459934234619 Rot Y ,  -1.6328200101852417 Rot Z ,  -2.395819902420044]
 			
-			final List initialValue = new ArrayList();
-			
-			
-			int[] myList; 
-					
-		   // System.out.println(value);
-			// start a new thread to make audio
-			td = new Thread() {
-				
-				public void run() {
-
-					//audioTrack.stop();
-					// process priority
-					setPriority(Thread.MAX_PRIORITY);
-					short samples[] = new short[buffersize];
-					// audio loop
-					while(isRunning) {
-						//fr =  440 + 440*value;
-						
-						for(int i=0; i<buffersize;i++) {
-							samples[i] = (short) (amp*Math.sin(ph));
-							ph += twopi*midOctave[Updown]/spr;
-						}
-						audioTrack.write(samples,0,buffersize);
-					}
-					
-					//System.out.println(accelationSquareRoot);
-					//initialValue.set(0,Updown);
-					audioTrack.stop();
-					audioTrack.release();
-				}
-			};
-			td.start();
 			
 			
 			//MainActivity activity = new MainActivity();
@@ -175,6 +193,9 @@ public class HelloAccessoryProviderService extends SAAgent {
 		}
 	}
 	
+   
+
+	
 	public Integer getAcclValue(){
 	  return acclvalue;
 	}
@@ -186,16 +207,29 @@ public class HelloAccessoryProviderService extends SAAgent {
     @Override
     public void onCreate() {
         super.onCreate();
-        
+        System.out.println("gen Create");
         SA mAccessory = new SA();
-        
         // buffer size, holds the size of audio block to be output
-        buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
-        // create audiotrack object
-     	audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
-     											,buffersize,AudioTrack.MODE_STREAM);
-     		
-     	audioTrack.play();
+        final Thread thread = new Thread(new Runnable() {
+            public void run() {
+            	
+                genTone();
+                System.out.println("gentone");
+                handler.post(new Runnable() {
+
+                    public void run() {
+                    	System.out.println("gen SOund");
+                        playSound();
+                    }
+                });
+                
+                handler.postDelayed(this, 100);
+            }
+            
+            
+        });
+        thread.start();	
+
      		
         try {
         	mAccessory.initialize(this);
