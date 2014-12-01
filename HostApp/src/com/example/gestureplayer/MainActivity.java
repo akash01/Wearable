@@ -31,7 +31,10 @@ public class MainActivity extends Activity{
 	boolean isRunning = true;
 	int amp = 1000;
 	int buffersize;
-	double fr = 140.f;
+	//double fr = 140.f;
+	
+	double midOctave[] = {440,446.16,493.88,523.25,554.37,587.33,0,622.25,659.25,698.46,739.99,783.99,830.61};
+	
 	double ph = 0.0;
 	double twopi = 8.*Math.atan(1.);
 	
@@ -46,6 +49,8 @@ public class MainActivity extends Activity{
 	private View aView;
 	private long lastUpdate;
 	float accelationSquareRoot;
+	
+	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +58,18 @@ public class MainActivity extends Activity{
 		setContentView(R.layout.activity_main);
 		fSlider = (SeekBar) findViewById(R.id.frequency);
 		aView = (TextView) findViewById(R.id.acclerometer);
+		
+
+		//Caused by: java.lang.IllegalStateException: play() called on uninitialized AudioTrack.
+		// start audio 
+		
+		// buffer size, holds the size of audio block to be output
+		buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
+		// create audiotrack object
+		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
+											,buffersize,AudioTrack.MODE_STREAM);
+		
+		System.out.printf("on create audioTrack",audioTrack);
 		
 		//sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 	    //lastUpdate = System.currentTimeMillis();
@@ -70,39 +87,53 @@ public class MainActivity extends Activity{
 		fSlider.setOnSeekBarChangeListener(listener);
 	}
 	
-	public void PlayNote(final int value) {
+	public void PlayNote(final int updown,final int leftright) {
+			
+		  if (audioTrack == null ) {
+			  System.out.println("audiotrakc ");  
+		  }
+			
 		
-		// buffer size, holds the size of audio block to be output
-		buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
-		// create audiotrack object
-		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
-									,buffersize,AudioTrack.MODE_STREAM);
-		// start audio 
-		audioTrack.play();
+		   try {
 				
-	    System.out.println(value);
-		// start a new thread to make audio
-		td = new Thread() {
-			public void run() {
-				// process priority
-				setPriority(Thread.MAX_PRIORITY);
-				short samples[] = new short[buffersize];
-				// audio loop
-				while(isRunning) {
-					fr =  440 + 440*value;
-					for(int i=0; i<buffersize;i++) {
-						samples[i] = (short) (amp*Math.sin(ph));
-						ph += twopi*fr/spr;
+				
+				if (audioTrack !=null ) {
+				
+				int[] myList; 
+						
+			   // System.out.println(value);
+				// start a new thread to make audio
+					
+
+						audioTrack.stop();
+						// process priority
+						short samples[] = new short[buffersize];
+						// audio loop
+						while(isRunning) {
+							//fr =  440 + 440*value;
+							
+							for(int i=0; i<buffersize;i++) {
+								samples[i] = (short) (amp*Math.sin(ph));
+								ph += twopi*midOctave[updown]/spr;
+							}
+							audioTrack.write(samples,0,buffersize);
+						}
+
+						audioTrack.play();
+					
+						//System.out.println(accelationSquareRoot);
+						
+						//audioTrack.stop();
+						//audioTrack.release();
 					}
-					audioTrack.write(samples,0,buffersize);
-				}
-				System.out.println(accelationSquareRoot);
 				
-				audioTrack.stop();
-				audioTrack.release();
-			}
-		};
-		td.start();
+
+		   } catch (java.lang.IllegalStateException e) {
+			    // TODO Auto-generated catch block
+			    e.printStackTrace();
+		   }		
+
+	
 		
 	}
 
@@ -136,7 +167,9 @@ public class MainActivity extends Activity{
 
 		if (Build.VERSION.SDK_INT < 14)
 			System.exit(0);
-		
+		audioTrack.stop();
+		audioTrack.release();
+
 		// when app is closed audio is stopped
 		isRunning = false;
 		try {

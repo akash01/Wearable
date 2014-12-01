@@ -76,9 +76,22 @@ public class HelloAccessoryProviderService extends SAAgent {
 					+ String.valueOf(time.second);
 
 			String strToUpdateUI = new String(data);
-			acclvalue = (int) 0.1;
+
+			String[] parts = strToUpdateUI.split(",");
+			
+		
+			int Updown = Integer.parseInt(parts[1]);
+			int lefright = Integer.parseInt(parts[0]);
+		
+			Toast.makeText(getBaseContext(),
+	                new String(data), Toast.LENGTH_LONG)
+	                .show();	
+			
+			System.out.println(acclvalue);
+			//[Hello X, -0.14330385384933642 Y,  1 Z,  11 Rot X ,  -6.424459934234619 Rot Y ,  -1.6328200101852417 Rot Z ,  -2.395819902420044]
+			
 			MainActivity activity = new MainActivity();
-			activity.PlayNote(acclvalue);
+			activity.PlayNote(Updown,lefright);
 			
 			final String message = strToUpdateUI.concat(timeStr);
 
