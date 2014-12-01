@@ -1,5 +1,7 @@
 package com.example.gestureplayer;
 
+import org.jfugue.Player;
+
 import android.app.Activity;
 import android.graphics.Color;
 import android.hardware.Sensor;
@@ -59,7 +61,6 @@ public class MainActivity extends Activity{
 		fSlider = (SeekBar) findViewById(R.id.frequency);
 		aView = (TextView) findViewById(R.id.acclerometer);
 		
-
 		//Caused by: java.lang.IllegalStateException: play() called on uninitialized AudioTrack.
 		// start audio 
 		

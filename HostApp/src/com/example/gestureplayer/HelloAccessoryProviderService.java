@@ -4,7 +4,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.security.cert.X509Certificate;
 
@@ -108,7 +110,8 @@ public class HelloAccessoryProviderService extends SAAgent {
 			
 			//[Hello X, -0.14330385384933642 Y,  1 Z,  11 Rot X ,  -6.424459934234619 Rot Y ,  -1.6328200101852417 Rot Z ,  -2.395819902420044]
 			
-
+			final List initialValue = new ArrayList();
+			
 			
 			int[] myList; 
 					
@@ -134,7 +137,7 @@ public class HelloAccessoryProviderService extends SAAgent {
 					}
 					
 					//System.out.println(accelationSquareRoot);
-					
+					//initialValue.set(0,Updown);
 					audioTrack.stop();
 					audioTrack.release();
 				}
