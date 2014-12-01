@@ -64,13 +64,13 @@ public class MainActivity extends Activity{
 		// start audio 
 		
 		// buffer size, holds the size of audio block to be output
-		buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
+		/*buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
 		// create audiotrack object
 		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
 											,buffersize,AudioTrack.MODE_STREAM);
 		
-		System.out.printf("on create audioTrack",audioTrack);
-		
+		audioTrack.play();*/
+	
 		//sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 	    //lastUpdate = System.currentTimeMillis();
 	    
@@ -88,12 +88,9 @@ public class MainActivity extends Activity{
 	}
 	
 	public void PlayNote(final int updown,final int leftright) {
-			
-		  if (audioTrack == null ) {
-			  System.out.println("audiotrakc ");  
-		  }
-			
 		
+		  
+		   //System.out.println("playNote",audioTrack);
 		   try {
 				
 				
@@ -103,10 +100,13 @@ public class MainActivity extends Activity{
 						
 			   // System.out.println(value);
 				// start a new thread to make audio
+				td = new Thread() {
 					
+					public void run() {
 
-						audioTrack.stop();
+						//audioTrack.stop();
 						// process priority
+						setPriority(Thread.MAX_PRIORITY);
 						short samples[] = new short[buffersize];
 						// audio loop
 						while(isRunning) {
@@ -118,15 +118,15 @@ public class MainActivity extends Activity{
 							}
 							audioTrack.write(samples,0,buffersize);
 						}
-
-						audioTrack.play();
-					
+						
 						//System.out.println(accelationSquareRoot);
 						
-						//audioTrack.stop();
-						//audioTrack.release();
+						audioTrack.stop();
+						audioTrack.release();
 					}
-				
+				};
+				td.start();
+				}
 
 		   } catch (java.lang.IllegalStateException e) {
 			    // TODO Auto-generated catch block

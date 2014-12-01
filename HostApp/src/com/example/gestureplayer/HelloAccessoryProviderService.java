@@ -14,6 +14,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.os.Binder;
 import android.os.IBinder;
 import android.text.format.Time;
@@ -29,6 +32,21 @@ import com.samsung.android.sdk.accessory.SASocket;
 
 public class HelloAccessoryProviderService extends SAAgent {
 	public static final String TAG = "HelloAccessoryProviderService";
+	
+	// audio processing thread
+	Thread td;
+	// sampling rate
+	int spr = 44100;
+	// audio on and off
+	boolean isRunning = true;
+	int amp = 1000;
+	int buffersize;
+	private AudioTrack audioTrack;
+	
+	double midOctave[] = {440,446.16,493.88,523.25,554.37,587.33,0,622.25,659.25,698.46,739.99,783.99,830.61};
+	
+	double ph = 0.0;
+	double twopi = 8.*Math.atan(1.);
 	
 	public Boolean isAuthentication = false;
 	public Context mContext = null;
@@ -80,18 +98,52 @@ public class HelloAccessoryProviderService extends SAAgent {
 			String[] parts = strToUpdateUI.split(",");
 			
 		
-			int Updown = Integer.parseInt(parts[1]);
+			final int Updown = Integer.parseInt(parts[1]);
 			int lefright = Integer.parseInt(parts[0]);
 		
 			Toast.makeText(getBaseContext(),
-	                new String(data), Toast.LENGTH_LONG)
+	                new String(strToUpdateUI), Toast.LENGTH_LONG)
 	                .show();	
 			
-			System.out.println(acclvalue);
+			
 			//[Hello X, -0.14330385384933642 Y,  1 Z,  11 Rot X ,  -6.424459934234619 Rot Y ,  -1.6328200101852417 Rot Z ,  -2.395819902420044]
 			
-			MainActivity activity = new MainActivity();
-			activity.PlayNote(Updown,lefright);
+
+			
+			int[] myList; 
+					
+		   // System.out.println(value);
+			// start a new thread to make audio
+			td = new Thread() {
+				
+				public void run() {
+
+					//audioTrack.stop();
+					// process priority
+					setPriority(Thread.MAX_PRIORITY);
+					short samples[] = new short[buffersize];
+					// audio loop
+					while(isRunning) {
+						//fr =  440 + 440*value;
+						
+						for(int i=0; i<buffersize;i++) {
+							samples[i] = (short) (amp*Math.sin(ph));
+							ph += twopi*midOctave[Updown]/spr;
+						}
+						audioTrack.write(samples,0,buffersize);
+					}
+					
+					//System.out.println(accelationSquareRoot);
+					
+					audioTrack.stop();
+					audioTrack.release();
+				}
+			};
+			td.start();
+			
+			
+			//MainActivity activity = new MainActivity();
+			//activity.PlayNote(Updown,lefright);
 			
 			final String message = strToUpdateUI.concat(timeStr);
 
@@ -133,6 +185,15 @@ public class HelloAccessoryProviderService extends SAAgent {
         super.onCreate();
         
         SA mAccessory = new SA();
+        
+        // buffer size, holds the size of audio block to be output
+        buffersize = AudioTrack.getMinBufferSize(spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);
+        // create audiotrack object
+     	audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,spr,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT
+     											,buffersize,AudioTrack.MODE_STREAM);
+     		
+     	audioTrack.play();
+     		
         try {
         	mAccessory.initialize(this);
         } catch (SsdkUnsupportedException e) {
