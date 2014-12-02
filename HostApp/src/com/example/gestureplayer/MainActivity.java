@@ -1,7 +1,5 @@
 package com.example.gestureplayer;
 
-import org.jfugue.Player;
-
 import android.app.Activity;
 import android.graphics.Color;
 import android.hardware.Sensor;
