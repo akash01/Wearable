@@ -172,6 +172,14 @@ public class HelloAccessoryProviderService extends SAAgent {
 			if (mConnectionsMap != null) {
 				mConnectionsMap.remove(mConnectionId);
 			}
+			// when app is closed audio is stopped
+			isRunning = false;
+			try {
+				td.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			td = null;
 		}
 	}
 	
